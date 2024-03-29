@@ -1,89 +1,86 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
-#include <numeric>
-#include <unordered_map>
-#include <climits>
+#include <set>
+#include <cmath>
 
 using namespace std;
 
-pair<vector<int>, vector<int>> solve_subset_sum_equality(vector<int>& nums) {
-    int n = nums.size();
-    int B = accumulate(nums.begin(), nums.end(), 0);
-    vector<vector<int>> t(n + 1, vector<int>(B + 1, 0));
-    vector<unordered_map<int, vector<int>>> c(n + 1, unordered_map<int, vector<int>>());
-
-    // Initialize tables
-    t[0][0] = 1;
+// Define your function to solve the problem
+// Define your function to solve the problem
+void solve(int n, int B, vector<int>& a) {
+    // Initialize tables t and c
+    vector<vector<bool>> t(n + 1, vector<bool>(B + 1, false)); // 2D table to store boolean values
+    vector<vector<set<int>>> c(n + 1, vector<set<int>>(B + 1)); // 2D table to store sets
+    
+    // Initialization
+    t[0][0] = true;
     c[0][0] = {};
 
+    // Base Cases
     for (int i = 1; i <= n; ++i) {
-        t[i][0] = 0;
+        t[i][0] = false;
         c[i][0] = {};
     }
 
     for (int j = 1; j <= B; ++j) {
-        t[0][j] = 0;
+        t[0][j] = false;
         c[0][j] = {};
     }
 
-    // Fill out the tables
-    int result = -1;
-    pair<vector<int>, vector<int>> optimal_solution = make_pair(vector<int>(), vector<int>());
-
+    // Main Loop
     for (int j = 1; j <= B; ++j) {
         for (int i = 1; i <= n; ++i) {
-            if (j >= nums[i - 1] && t[i - 1][j - nums[i - 1]] == 1) {
-                t[i][j] = 1;
-                c[i][j] = c[i - 1][j - nums[i - 1]];
-                c[i][j].push_back(i);
-            } else {
-                t[i][j] = 0;
-                c[i][j] = {};
-            }
-        }
-    }
-
-    // Identify candidate sums and find the optimal solution
-    int min_ratio = INT_MAX;
-    for (int j = 1; j <= B / 2; ++j) {
-        if (t[n][j] == 1) {
-            int kj = -1;
-            for (int k = j - 1; k >= 1; --k) {
-                if (!c[n][k].empty() && (c[n][j].size() < c[n][k].size())) {
-                    kj = k;
-                    break;
-                }
-            }
-            if (kj != -1) {
-                int ratio = j / kj;
-                if (ratio < min_ratio) {
-                    min_ratio = ratio;
-                    optimal_solution.first = c[n][j];
-                    optimal_solution.second = c[n][kj];
+            // Update t[i][j] and c[i][j] based on previous values
+            for (int k = 0; k < i; ++k) {
+                int prev_j = j - a[i - 1]; // Adjust for zero-based indexing
+                if (prev_j >= 0 && t[k][prev_j]) {
+                    t[i][j] = true; // Update t[i][j] based on some condition
+                    c[i][j] = c[k][prev_j]; // Update c[i][j] based on some condition
+                    c[i][j].insert(a[i - 1]); // Insert the current element to the set
                 }
             }
         }
     }
 
-    return optimal_solution;
+    // Termination Condition
+    for (int i1 = 0; i1 <= n; ++i1) {
+        for (int i2 = i1 + 1; i2 <= n; ++i2) {
+            if (t[i1][B] && t[i2][B]) {
+                cout << "Solution found!\n";
+                cout << "Elements in subset 1: ";
+                for (auto elem : c[i1][B]) {
+                    cout << elem << " ";
+                }
+                cout << "\nElements in subset 2: ";
+                for (auto elem : c[i2][B]) {
+                    cout << elem << " ";
+                }
+                cout << endl;
+                return;
+            }
+        }
+    }
+
+    cout << "No solution found!\n";
 }
 
+
 int main() {
-    vector<int> nums = {1, 2, 3, 4};
-    pair<vector<int>, vector<int>> ans = solve_subset_sum_equality(nums);
-
-    cout << "Subset 1: ";
-    for(auto it : ans.first){
-        cout << it << " ";
+    int n;
+    double B;
+    cout << "Enter the number of elements (n): ";
+    cin >> n;
+    vector<int> a(n);
+    cout << "Enter the elements: ";
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
     }
-    cout << endl;
 
-    cout << "Subset 2: ";
-    for(auto it : ans.second){
-        cout << it << " ";
+    for(auto it : a){
+        B+= it;
     }
-    cout << endl;
 
+    B = floor(B/2);
+    solve(n, B, a);
     return 0;
 }
