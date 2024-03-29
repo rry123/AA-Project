@@ -4,82 +4,77 @@
 #include <numeric>
 #include <unordered_map>
 #include <climits>
+#include <set>
+#include <cmath>
 
 using namespace std;
 
-// Function to solve the subset sum equality preoblem using the pseudo-polynomial algorithm
-pair<vector<int>, vector<int>> solve_subset_sum_equality(const vector<int>& nums) {
-    int n = nums.size();
-    int B = accumulate(nums.begin(), nums.end(), 0);
-    vector<vector<int>> t(n + 1, vector<int>(B + 1, 0));
-    vector<unordered_map<int, vector<int>>> c(n + 1, unordered_map<int, vector<int>>());
+void psuedo_solve(int n, vector<int>& a) {
 
-    // Step 1: Initialize tables
-    t[0][0] = 1;
+    double B =0;
+    for(auto it : a){
+        B+=it;
+    }
+
+    B = floor(B/2);
+    // Initialize tables t and c
+    vector<vector<bool>> t(n + 1, vector<bool>(B + 1, false)); // 2D table to store boolean values
+    vector<vector<set<int>>> c(n + 1, vector<set<int>>(B + 1)); // 2D table to store sets
+    
+    // Initialization
+    t[0][0] = true;
     c[0][0] = {};
 
+    // Base Cases
     for (int i = 1; i <= n; ++i) {
-        t[i][0] = 0;
+        t[i][0] = false;
         c[i][0] = {};
     }
 
     for (int j = 1; j <= B; ++j) {
-        t[0][j] = 0;
+        t[0][j] = false;
         c[0][j] = {};
     }
 
-    // Step 2: Fill out the tables
-    int result = -1;
-    pair<vector<int>, vector<int>> optimal_solution;
-
+    // Main Loop
     for (int j = 1; j <= B; ++j) {
         for (int i = 1; i <= n; ++i) {
-            if (j >= nums[i - 1] && t[i - 1][j - nums[i - 1]] == 1) {
-                t[i][j] = 1;
-                c[i][j] = c[i - 1][j - nums[i - 1]];
-                c[i][j].push_back(i);
-
-                // Check for termination condition
-                if (t[i][j] == 1 && t[i - 1][j] == 1) {
-                    result = j;
-                    optimal_solution.first = c[i][j];
-                    optimal_solution.second = c[i - 1][j];
-                    return optimal_solution;
-                }
-            } else {
-                t[i][j] = 0;
-                c[i][j] = {};
-            }
-        }
-    }
-
-    // Step 3: Identify candidate sums and find the optimal solution
-    int min_ratio = INT_MAX;
-    for (int j = 1; j <= result / 2; ++j) {
-        if (t[n][j] == 1) {
-            int kj = -1;
-            for (int k = j - 1; k >= 1; --k) {
-                if (!c[n][j].empty() && (c[n][j].size() < c[n][k].size())) {
-                    kj = k;
-                    break;
-                }
-            }
-            if (kj != -1) {
-                int ratio = j / kj;
-                if (ratio < min_ratio) {
-                    min_ratio = ratio;
-                    optimal_solution.first = c[n][j];
-                    optimal_solution.second = c[n][kj];
+            // Update t[i][j] and c[i][j] based on previous values
+            for (int k = 0; k < i; ++k) {
+                int prev_j = j - a[i - 1]; // Adjust for zero-based indexing
+                if (prev_j >= 0 && t[k][prev_j]) {
+                    t[i][j] = true; // Update t[i][j] based on some condition
+                    c[i][j] = c[k][prev_j]; // Update c[i][j] based on some condition
+                    c[i][j].insert(a[i - 1]); // Insert the current element to the set
                 }
             }
         }
     }
 
-    return optimal_solution;
+    // Termination Condition
+    for (int i1 = 0; i1 <= n; ++i1) {
+        for (int i2 = i1 + 1; i2 <= n; ++i2) {
+            if (t[i1][B] && t[i2][B]) {
+                cout << "Solution found!\n";
+                cout << "Elements in subset 1: ";
+                for (auto elem : c[i1][B]) {
+                    cout << elem << " ";
+                }
+                cout << "\nElements in subset 2: ";
+                for (auto elem : c[i2][B]) {
+                    cout << elem << " ";
+                }
+                cout << endl;
+                return;
+            }
+        }
+    }
+
+    cout << "No solution found!\n";
 }
 
-// Function to solve instance I_-m for Case 2b
-pair<vector<int>, vector<int>> solve_instance_case_2b(const vector<int>& nums, const vector<int>& Im) {
+
+void solve_instance_case_2b(const vector<int>& nums, const vector<int>& Im) {
     int m = nums.size();
 
     // Generate pairs of subsets P(v, m) and Q(v, m)
@@ -112,11 +107,21 @@ pair<vector<int>, vector<int>> solve_instance_case_2b(const vector<int>& nums, c
         }
     }
 
-    return make_pair(min_P, min_Q);
+    cout<<"Subset 1 : ";
+    for(auto it: min_P){
+        cout<<it<<" ";
+    }
+    cout<<endl;
+    cout<<"Subset : 2 ";
+
+    for(auto it : min_Q){
+        cout<<it<<" ";
+    }
+    cout<<endl;
 }
 
 // Function to solve the algorithm for a given instance Im
-pair<vector<int>, vector<int>> solve_instance(const vector<int>& nums, double e) {
+void solve_instance(const vector<int>& nums, double e, int n) {
     int m = nums.size();
 
     // Sorting the input numbers in increasing order
@@ -128,20 +133,22 @@ pair<vector<int>, vector<int>> solve_instance(const vector<int>& nums, double e)
 
     // Calculate n0
     int n0 = 0;
-    while (n0 <= m && km * n0 < 1) {
-        n0++;
+    while (n0 <= n ) {
+        double kn0 = (e*e*sorted_nums[m-1])/(2*m);
+        if(kn0<1){
+            n0++;
+        }
     }
 
     if (m <= n0) {
         // Apply pseudo-polynomial algorithm
         cout << "Applying pseudo-polynomial algorithm for instance I_" << m << endl;
-        pair<vector<int>, vector<int>> solution = solve_subset_sum_equality(sorted_nums);
-        return solution;
+        psuedo_solve(sorted_nums.size(), sorted_nums);
     } else {
         // Transform the instance to contain only polynomial-size numbers
         vector<double> transformed_nums(m);
         for (int i = 0; i < m; ++i) {
-            transformed_nums[i] = (double(sorted_nums[i]) * m) / km;
+            transformed_nums[i] =  floor((double(sorted_nums[i]) ) / km);
         }
 
         // Define I_-m
@@ -158,43 +165,49 @@ pair<vector<int>, vector<int>> solve_instance(const vector<int>& nums, double e)
             // Case 1: t = 1
             cout << "Case 1: t = 1" << endl;
             // Implement solution for Case 1
+            cout<<"Subset 1 :";
+            cout<<Im[0];
+            cout<<endl;
+            cout<<"Subset 2: ";
+            for(int k =1; k<t; k++){
+                cout<<Im[k]<<" ";
+            }
         } else {
             // Case 2: t > 1
             cout << "Case 2: t > 1" << endl;
-            pair<vector<int>, vector<int>> solution = solve_instance_case_2b(sorted_nums, Im);
-            return solution;
+            
+            double sum = 0;
+
+            for(auto it : Im){
+                sum += it;
+            }
+
+            if(int(sum) %2 == 0){
+                psuedo_solve(t, Im);
+            }
+            else{
+                solve_instance_case_2b(sorted_nums, Im);
+            }
         }
     }
 
     // Placeholder return value
-    return make_pair(vector<int>(), vector<int>());
+    
 }
 
 int main() {
-    vector<int> nums = {1, 2, 3, 4, 5}; // Example input
-    double e = 0.8; // Example value of e
-
+    vector<int> nums = {1, 2, 3, 4, 5, 6, 8}; // Example input
+    double e = 0.1; // Example value of e
+    int n = nums.size();
     for (int m = 2; m <= nums.size(); ++m) {
         cout << "Instance I_" << m << ":" << endl;
-        pair<vector<int>, vector<int>> solution = solve_instance(nums, e);
-        // Output the solution here
 
-        cout<<"Printing the subset1"<<endl;
-        cout<<"{";
-        for(int i : solution.first){
-            cout<<i<<" ";
+        vector<int> alpha;
+        for(int k=0; k<m ; k++){
+            alpha.push_back(nums[k]);
         }
-        cout<<"}";
+        solve_instance(alpha, e, n);
 
-
-        cout<<endl<<endl;
-        cout<<"Printing thhe subset2"<<endl;
-        cout<<"{";
-        for(int i: solution.second){
-            cout<<i<<" ";
-        }
-        cout<<"}";
-        cout<<endl;
     }
 
     return 0;
