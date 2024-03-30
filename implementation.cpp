@@ -196,9 +196,17 @@ void solve_instance(const vector<int>& nums, double e, int n) {
 }
 
 int main() {
-    vector<int> nums = {1, 2, 3, 4, 5, 6, 8}; // Example input
+
     double e = 0.1; // Example value of e
-    int n = nums.size();
+    int n;
+    cout<<"Enter the number of elements of set:\n";
+    cin>>n;
+    vector<int> nums(n);
+    cout<<"Enter the elements of the subset:\n";
+    for(int i=0; i<n; i++){
+        cin>>nums[i];
+    }
+
     for (int m = 2; m <= nums.size(); ++m) {
         cout << "Instance I_" << m << ":" << endl;
 
@@ -207,6 +215,7 @@ int main() {
             alpha.push_back(nums[k]);
         }
         solve_instance(alpha, e, n);
+        cout<<endl;
 
     }
 
